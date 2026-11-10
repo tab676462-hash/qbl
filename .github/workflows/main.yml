@@ -1,0 +1,43 @@
+name: Build Cyanide Dump
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Join and extract
+        run: |
+          set -e
+          cat cyanide-dump-zh-full.zip.part* > cyanide-dump-zh-full.zip
+          unzip -o -q cyanide-dump-zh-full.zip
+          ls -la
+          test -f Cyanide.xcodeproj/project.pbxproj
+          test -f scripts/build.sh
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build
+        run: |
+          set -e
+          chmod +x scripts/build.sh
+          ./scripts/build.sh
+
+      - name: Check IPA
+        run: |
+          set -e
+          ls -lh build/
+          test -f build/Cyanide.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cyanide-Dump
+          path: build/Cyanide.ipa
